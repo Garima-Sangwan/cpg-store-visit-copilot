@@ -2,7 +2,7 @@
 
 > **AI-Powered Field Sales Assistant with Computer Vision, Demand Forecasting & Agentic Orchestration**
 
-[![Demo](https://img.shields.io/badge/Demo-Live-brightgreen)](https://your-demo-url.com)
+[![Demo](https://img.shields.io/badge/Demo-Live-brightgreen)](https://garima-sangwan.github.io/cpg-store-visit-copilot/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Tech Stack](https://img.shields.io/badge/Stack-HTML5%20%7C%20JavaScript%20%7C%20Canvas%20API-orange)](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API)
 
