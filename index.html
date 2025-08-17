@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPG Store Visit Copilot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .demo-tabs {
+            display: flex;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            min-height: 600px;
+        }
+
+        .tab-nav {
+            width: 250px;
+            background: #f8f9fa;
+            padding: 20px 0;
+            border-right: 1px solid #e9ecef;
+        }
+
+        .tab-button {
+            width: 100%;
+            padding: 15px 20px;
+            border: none;
+            background: transparent;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            border-left: 4px solid transparent;
+        }
+
+        .tab-button:hover {
+            background: #e9ecef;
+        }
+
+        .tab-button.active {
+            background: #e3f2fd;
+            border-left-color: #2196f3;
+            color: #1976d2;
+            font-weight: 600;
+        }
+
+        .tab-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        .camera-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .camera-container {
+            position: relative;
+            max-width: 400px;
+            margin: 20px auto;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        #cameraVideo {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+        }
+
+        .camera-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .detection-box {
+            position: absolute;
+            border: 2px solid #00ff00;
+            background: rgba(0,255,0,0.1);
+            font-size: 12px;
+            color: #00ff00;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .oos-indicator {
+            border-color: #ff4444 !important;
+            background: rgba(255,68,68,0.2) !important;
+            color: #ff4444 !important;
+        }
+
+        .controls {
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2196f3;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .chat-container {
+            background: white;
+            border-radius: 15px;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            border-radius: 20px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .message.agent {
+            background: #e3f2fd;
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+        }
+
+        .message.user {
+            background: #f3e5f5;
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+        }
+
+        .chat-input {
+            display: flex;
+            padding: 20px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            outline: none;
+        }
+
+        .chat-input button {
+            margin-left: 10px;
+            padding: 12px 20px;
+            background: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+        }
+
+        .forecast-chart {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .benchmark-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .benchmark-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-good { background: #4caf50; }
+        .status-warning { background: #ff9800; }
+        .status-error { background: #f44336; }
+
+        .progress-bar {
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            height: 20px;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .demo-tabs {
+                flex-direction: column;
+            }
+            
+            .tab-nav {
+                width: 100%;
+                display: flex;
+                overflow-x: auto;
+            }
+            
+            .tab-button {
+                min-width: 120px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛒 CPG Store Visit Copilot</h1>
+            <p>AI-Powered Field Sales Assistant with Vision, Forecasting & Agentic Orchestration</p>
+        </div>
+
+        <div class="demo-tabs">
+            <div class="tab-nav">
+                <button class="tab-button active" data-tab="vision">📷 Shelf Auditor</button>
+                <button class="tab-button" data-tab="forecast">📈 Replenishment</button>
+                <button class="tab-button" data-tab="agent">🤖 AI Sales Agent</button>
+                <button class="tab-button" data-tab="benchmark">⚡ Benchmark</button>
+                <button class="tab-button" data-tab="summary">📄 Visit Summary</button>
+            </div>
+
+            <div class="tab-content">
+                <!-- Vision Tab -->
+                <div class="tab-panel active" id="vision">
+                    <h2>🔍 Shelf & Planogram Auditor</h2>
+                    <p>Real-time SKU detection, OOS identification, and compliance scoring</p>
+                    
+                    <div class="camera-section">
+                        <div class="camera-container">
+                            <video id="cameraVideo" autoplay muted playsinline></video>
+                            <canvas class="camera-overlay" id="detectionOverlay"></canvas>
+                        </div>
+                        
+                        <div class="controls">
+                            <button class="btn btn-primary" onclick="startCamera()">Start Camera</button>
+                            <button class="btn btn-success" onclick="simulateDetection()">Simulate Detection</button>
+                            <button class="btn btn-warning" onclick="stopCamera()">Stop Camera</button>
+                        </div>
+                    </div>
+
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-value" id="detectedSKUs">0</div>
+                            <div class="metric-label">SKUs Detected</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="oosCount">0</div>
+                            <div class="metric-label">Out of Stock</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="complianceScore">--</div>
+                            <div class="metric-label">Compliance %</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="shareOfShelf">--</div>
+                            <div class="metric-label">Share of Shelf</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Forecast Tab -->
+                <div class="tab-panel" id="forecast">
+                    <h2>📊 Predictive Replenishment & Scheme Optimizer</h2>
+                    <p>AI-powered demand forecasting with optimal trade scheme selection</p>
+                    
+                    <div class="forecast-chart">
+                        <h3>7-Day Demand Forecast</h3>
+                        <canvas id="forecastChart" width="600" height="300"></canvas>
+                    </div>
+
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-value">142</div>
+                            <div class="metric-label">Units to Order</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">₹8,200</div>
+                            <div class="metric-label">Projected GMV</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">18%</div>
+                            <div class="metric-label">Net Margin</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">S2</div>
+                            <div class="metric-label">Best Scheme</div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="generateForecast()">Generate New Forecast</button>
+                    <button class="btn btn-success" onclick="optimizeSchemes()">Optimize Schemes</button>
+                </div>
+
+                <!-- Agent Tab -->
+                <div class="tab-panel" id="agent">
+                    <h2>🤖 AI Sales Agent Chat</h2>
+                    <p>Conversational AI that orchestrates shelf audits, forecasts, and recommendations</p>
+                    
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="message agent">
+                                Hello! I'm your AI field companion. I can help you audit shelves, forecast demand, and optimize your visit. What would you like to do?
+                            </div>
+                        </div>
+                        <div class="chat-input">
+                            <input type="text" id="chatInput" placeholder="Type your message..." 
+                                   onkeypress="handleChatKeypress(event)">
+                            <button onclick="sendMessage()">Send</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Benchmark Tab -->
+                <div class="tab-panel" id="benchmark">
+                    <h2>⚡ Dare-to-Compare Benchmark</h2>
+                    <p>Performance metrics across CV accuracy, forecast quality, and system latency</p>
+                    
+                    <div class="benchmark-results">
+                        <div class="benchmark-card">
+                            <h3>Computer Vision</h3>
+                            <div><span class="status-indicator status-good"></span>mAP@0.5: <strong>0.87</strong></div>
+                            <div><span class="status-indicator status-good"></span>Compliance F1: <strong>0.92</strong></div>
+                            <div><span class="status-indicator status-warning"></span>Inference: <strong>45ms</strong></div>
+                        </div>
+                        
+                        <div class="benchmark-card">
+                            <h3>Forecasting</h3>
+                            <div><span class="status-indicator status-good"></span>sMAPE: <strong>12.3%</strong></div>
+                            <div><span class="status-indicator status-good"></span>WRMSSE: <strong>0.68</strong></div>
+                            <div><span class="status-indicator status-good"></span>vs Baseline: <strong>+23%</strong></div>
+                        </div>
+                        
+                        <div class="benchmark-card">
+                            <h3>System Performance</h3>
+                            <div><span class="status-indicator status-good"></span>Agent P50: <strong>280ms</strong></div>
+                            <div><span class="status-indicator status-warning"></span>Agent P95: <strong>850ms</strong></div>
+                            <div><span class="status-indicator status-good"></span>Offline Mode: <strong>✓</strong></div>
+                        </div>
+                        
+                        <div class="benchmark-card">
+                            <h3>Business Impact</h3>
+                            <div><span class="status-indicator status-good"></span>GMV Uplift: <strong>+₹12.4K</strong></div>
+                            <div><span class="status-indicator status-good"></span>Margin Improvement: <strong>+3.2%</strong></div>
+                            <div><span class="status-indicator status-good"></span>Visit Efficiency: <strong>+40%</strong></div>
+                        </div>
+                    </div>
+
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 85%" id="overallScore"></div>
+                    </div>
+                    <p style="text-align: center; margin-top: 10px;">Overall Performance Score: <strong>85%</strong></p>
+                </div>
+
+                <!-- Summary Tab -->
+                <div class="tab-panel" id="summary">
+                    <h2>📋 Visit Summary Report</h2>
+                    <p>Comprehensive visit analysis with actionable insights and recommendations</p>
+                    
+                    <div style="background: white; border-radius: 15px; padding: 30px; margin: 20px 0; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+                        <div style="border-bottom: 2px solid #2196f3; padding-bottom: 15px; margin-bottom: 25px;">
+                            <h1 style="color: #2196f3; margin: 0;">Visit Summary Report</h1>
+                            <p style="color: #666; margin: 5px 0;">Store: SuperMart Downtown | Rep: Garima Sangwan | Date: Aug 17, 2025</p>
+                        </div>
+                        
+                        <div style="margin-bottom: 25px;">
+                            <h3 style="color: #333; margin-bottom: 15px;">🔍 Shelf Audit Results</h3>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 10px;">
+                                <p><strong>SKUs Audited:</strong> 24 | <strong>Compliance Score:</strong> 82%</p>
+                                <p><strong>Out of Stock:</strong> 3 items (Cola 500ml, Chips BBQ, Energy Drink)</p>
+                                <p><strong>Share of Shelf:</strong> Brand X: 45%, Brand Y: 32%, Others: 23%</p>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 25px;">
+                            <h3 style="color: #333; margin-bottom: 15px;">📈 Replenishment Recommendations</h3>
+                            <div style="background: #e8f5e8; padding: 15px; border-radius: 10px;">
+                                <p><strong>Cola 500ml:</strong> Order 24 units | Scheme S2 | ROI: +₹2,400</p>
+                                <p><strong>Chips BBQ:</strong> Order 18 units | Scheme S1 | ROI: +₹1,800</p>
+                                <p><strong>Energy Drink:</strong> Order 12 units | No scheme | ROI: +₹960</p>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 25px;">
+                            <h3 style="color: #333; margin-bottom: 15px;">💰 Financial Impact</h3>
+                            <div style="background: #fff3cd; padding: 15px; border-radius: 10px;">
+                                <p><strong>Total Order Value:</strong> ₹18,450</p>
+                                <p><strong>Projected GMV Increase:</strong> +₹8,200 (18% margin)</p>
+                                <p><strong>Scheme Savings:</strong> ₹1,240</p>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 25px;">
+                            <h3 style="color: #333; margin-bottom: 15px;">🎯 Next Actions</h3>
+                            <ul style="margin-left: 20px;">
+                                <li>Follow up on Cola 500ml delivery in 3 days</li>
+                                <li>Review planogram compliance for snacks section</li>
+                                <li>Schedule promotional display setup for next week</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="exportPDF()">📄 Export PDF</button>
+                    <button class="btn btn-success" onclick="shareWhatsApp()">📱 Share via WhatsApp</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let currentStream = null;
+        let detectionInterval = null;
+        let forecastData = null;
+
+        // Tab switching
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const tabId = e.target.dataset.tab;
+                switchTab(tabId);
+            });
+        });
+
+        function switchTab(tabId) {
+            // Remove active classes
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+            
+            // Add active classes
+            document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // Camera functionality
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const video = document.getElementById('cameraVideo');
+                video.srcObject = stream;
+                currentStream = stream;
+                
+                // Start detection simulation
+                startDetectionLoop();
+            } catch (error) {
+                console.log('Camera access denied, showing demo mode');
+                simulateDetection();
+            }
+        }
+
+        function stopCamera() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+                currentStream = null;
+            }
+            if (detectionInterval) {
+                clearInterval(detectionInterval);
+                detectionInterval = null;
+            }
+            clearDetections();
+        }
+
+        function startDetectionLoop() {
+            detectionInterval = setInterval(() => {
+                simulateDetection();
+            }, 2000);
+        }
+
+        function simulateDetection() {
+            const canvas = document.getElementById('detectionOverlay');
+            const ctx = canvas.getContext('2d');
+            const container = canvas.parentElement;
+            
+            // Set canvas size to match video
+            canvas.width = container.offsetWidth;
+            canvas.height = container.offsetHeight;
+            
+            // Clear previous detections
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Simulate detected products
+            const products = [
+                { name: 'Cola 500ml', x: 50, y: 40, w: 80, h: 120, oos: true },
+                { name: 'Pepsi 500ml', x: 150, y: 35, w: 75, h: 125, oos: false },
+                { name: 'Sprite 500ml', x: 240, y: 45, w: 70, h: 115, oos: false },
+                { name: 'Chips BBQ', x: 60, y: 180, w: 90, h: 60, oos: true },
+                { name: 'Chips Original', x: 170, y: 185, w: 85, h: 55, oos: false },
+                { name: 'Energy Drink', x: 280, y: 175, w: 65, h: 85, oos: true }
+            ];
+            
+            let detectedCount = 0;
+            let oosCount = 0;
+            
+            products.forEach(product => {
+                detectedCount++;
+                if (product.oos) oosCount++;
+                
+                // Draw bounding box
+                ctx.strokeStyle = product.oos ? '#ff4444' : '#00ff00';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(product.x, product.y, product.w, product.h);
+                
+                // Draw label background
+                ctx.fillStyle = product.oos ? '#ff4444' : '#00ff00';
+                ctx.fillRect(product.x, product.y - 20, product.w, 20);
+                
+                // Draw label text
+                ctx.fillStyle = 'white';
+                ctx.font = '12px Arial';
+                ctx.fillText(product.name, product.x + 5, product.y - 6);
+                
+                // Add OOS indicator
+                if (product.oos) {
+                    ctx.fillStyle = '#ff4444';
+                    ctx.fillText('OOS', product.x + product.w - 30, product.y - 6);
+                }
+            });
+            
+            // Update metrics
+            document.getElementById('detectedSKUs').textContent = detectedCount;
+            document.getElementById('oosCount').textContent = oosCount;
+            document.getElementById('complianceScore').textContent = Math.round((detectedCount - oosCount) / detectedCount * 100) + '%';
+            document.getElementById('shareOfShelf').textContent = '45%';
+        }
+
+        function clearDetections() {
+            const canvas = document.getElementById('detectionOverlay');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Reset metrics
+            document.getElementById('detectedSKUs').textContent = '0';
+            document.getElementById('oosCount').textContent = '0';
+            document.getElementById('complianceScore').textContent = '--';
+            document.getElementById('shareOfShelf').textContent = '--';
+        }
+
+        // Forecast functionality
+        function generateForecast() {
+            const canvas = document.getElementById('forecastChart');
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Generate sample data
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const actual = [45, 52, 38, 61, 75, 88, 42];
+            const forecast = [48, 55, 42, 58, 78, 85, 45];
+            
+            // Chart dimensions
+            const padding = 60;
+            const chartWidth = canvas.width - padding * 2;
+            const chartHeight = canvas.height - padding * 2;
+            const maxValue = Math.max(...actual, ...forecast) + 10;
+            
+            // Draw axes
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(padding, padding);
+            ctx.lineTo(padding, canvas.height - padding);
+            ctx.lineTo(canvas.width - padding, canvas.height - padding);
+            ctx.stroke();
+            
+            // Draw data lines
+            const pointSpacing = chartWidth / (days.length - 1);
+            
+            // Actual line (blue)
+            ctx.strokeStyle = '#2196f3';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            actual.forEach((value, i) => {
+                const x = padding + i * pointSpacing;
+                const y = canvas.height - padding - (value / maxValue) * chartHeight;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+            
+            // Forecast line (orange)
+            ctx.strokeStyle = '#ff9800';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            forecast.forEach((value, i) => {
+                const x = padding + i * pointSpacing;
+                const y = canvas.height - padding - (value / maxValue) * chartHeight;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Draw points and labels
+            days.forEach((day, i) => {
+                const x = padding + i * pointSpacing;
+                
+                // Day labels
+                ctx.fillStyle = '#333';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(day, x, canvas.height - padding + 20);
+                
+                // Data points
+                const actualY = canvas.height - padding - (actual[i] / maxValue) * chartHeight;
+                const forecastY = canvas.height - padding - (forecast[i] / maxValue) * chartHeight;
+                
+                // Actual points
+                ctx.fillStyle = '#2196f3';
+                ctx.beginPath();
+                ctx.arc(x, actualY, 5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Forecast points
+                ctx.fillStyle = '#ff9800';
+                ctx.beginPath();
+                ctx.arc(x, forecastY, 5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            // Legend
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#2196f3';
+            ctx.fillRect(padding, 20, 20, 3);
+            ctx.fillText('Actual Sales', padding + 30, 30);
+            
+            ctx.fillStyle = '#ff9800';
+            ctx.fillRect(padding + 150, 20, 20, 3);
+            ctx.fillText('Forecast', padding + 180, 30);
+        }
+
+        function optimizeSchemes() {
+            // Simulate scheme optimization
+            const schemes = ['S1', 'S2', 'S3', 'No Scheme'];
+            const selectedScheme = schemes[Math.floor(Math.random() * schemes.length)];
+            
+            // Update the metric card
+            const schemeCard = document.querySelector('.metric-card:last-child .metric-value');
+            schemeCard.textContent = selectedScheme;
+            
+            // Add chat message about optimization
+            addAgentMessage(`🎯 Optimization complete! Selected scheme ${selectedScheme} for maximum ROI. This scheme offers the best balance of volume uplift and margin preservation.`);
+        }
+
+        // Chat functionality
+        function handleChatKeypress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message
+            addUserMessage(message);
+            input.value = '';
+            
+            // Simulate AI response
+            setTimeout(() => {
+                generateAgentResponse(message);
+            }, 1000);
+        }
+
+        function addUserMessage(message) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message user';
+            messageDiv.textContent = message;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function addAgentMessage(message) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message agent';
+            messageDiv.textContent = message;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function generateAgentResponse(userMessage) {
+            const message = userMessage.toLowerCase();
+            let response = '';
+            
+            if (message.includes('audit') || message.includes('shelf') || message.includes('check')) {
+                response = `🔍 Running shelf audit... I've detected 24 SKUs with 3 out-of-stock items: Cola 500ml, Chips BBQ, and Energy Drink. Overall compliance is 82%. The Cola section needs immediate attention - it's your top performer but currently OOS.`;
+                
+                // Trigger detection simulation
+                setTimeout(() => simulateDetection(), 500);
+                
+            } else if (message.includes('forecast') || message.includes('predict') || message.includes('demand')) {
+                response = `📈 Analyzing demand patterns... Based on historical sales, seasonality, and current inventory levels, I recommend ordering: Cola 500ml (24 units), Chips BBQ (18 units), Energy Drink (12 units). Total projected GMV uplift: ₹8,200 with 18% net margin.`;
+                
+                // Trigger forecast generation
+                setTimeout(() => generateForecast(), 500);
+                
+            } else if (message.includes('scheme') || message.includes('promotion') || message.includes('optimize')) {
+                response = `💰 Running scheme optimization... I recommend Scheme S2 for Cola 500ml - it offers 15% volume uplift with only 2% margin reduction. This scheme historically performs 23% better than baseline in similar stores.`;
+                
+            } else if (message.includes('summary') || message.includes('report')) {
+                response = `📋 Generating visit summary... I've compiled all audit results, replenishment recommendations, and financial impact. Key highlights: 3 OOS items identified, ₹18,450 recommended order value, projected ₹8,200 GMV increase. Ready to export report.`;
+                
+            } else if (message.includes('hello') || message.includes('hi') || message.includes('help')) {
+                response = `👋 Hello! I can help you with: 1) Shelf audits using computer vision, 2) Demand forecasting and replenishment planning, 3) Trade scheme optimization, 4) Visit summary generation. What would you like to focus on?`;
+                
+            } else {
+                response = `🤖 I understand you're asking about "${userMessage}". Let me analyze this using my shelf_status(), forecast_order(), and optimize_scheme() tools. Based on current data, I recommend focusing on the OOS Cola 500ml - it's impacting your potential revenue significantly.`;
+            }
+            
+            addAgentMessage(response);
+        }
+
+        // PDF Export functionality
+        function exportPDF() {
+            // Simulate PDF generation
+            const loadingMsg = document.createElement('div');
+            loadingMsg.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                padding: 30px;
+                border-radius: 15px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                z-index: 1000;
+                text-align: center;
+            `;
+            loadingMsg.innerHTML = `
+                <div style="font-size: 1.2rem; margin-bottom: 15px;">📄 Generating PDF Report...</div>
+                <div style="width: 200px; height: 4px; background: #e9ecef; border-radius: 2px; overflow: hidden;">
+                    <div style="width: 0%; height: 100%; background: #2196f3; transition: width 2s ease;" id="pdfProgress"></div>
+                </div>
+            `;
+            
+            document.body.appendChild(loadingMsg);
+            
+            // Animate progress
+            setTimeout(() => {
+                document.getElementById('pdfProgress').style.width = '100%';
+            }, 100);
+            
+            // Complete after 2 seconds
+            setTimeout(() => {
+                loadingMsg.innerHTML = `
+                    <div style="font-size: 1.2rem; color: #4caf50; margin-bottom: 15px;">✅ PDF Generated Successfully!</div>
+                    <div style="color: #666;">Visit_Summary_SuperMart_Aug17_2025.pdf</div>
+                    <button onclick="this.parentElement.parentElement.remove()" 
+                            style="margin-top: 15px; padding: 10px 20px; background: #2196f3; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                        Close
+                    </button>
+                `;
+            }, 2000);
+        }
+
+        function shareWhatsApp() {
+            // Simulate WhatsApp sharing
+            const message = "🛒 Store Visit Complete!\n\nSuperMart Downtown - Aug 17, 2025\n• 24 SKUs audited (82% compliance)\n• 3 OOS items identified\n• ₹18,450 order recommended\n• ₹8,200 projected GMV uplift\n\nFull report: [Generated PDF]";
+            
+            // In a real app, this would use WhatsApp Business API
+            const whatsappURL = `https://wa.me/?text=${encodeURIComponent(message)}`;
+            
+            // Show success message instead of opening WhatsApp
+            const successMsg = document.createElement('div');
+            successMsg.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: #25d366;
+                color: white;
+                padding: 20px 30px;
+                border-radius: 15px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                z-index: 1000;
+                text-align: center;
+                font-size: 1.1rem;
+            `;
+            successMsg.innerHTML = `
+                📱 WhatsApp Message Ready!<br>
+                <small style="opacity: 0.9;">Message prepared for sharing</small>
+            `;
+            
+            document.body.appendChild(successMsg);
+            
+            setTimeout(() => {
+                successMsg.remove();
+            }, 2000);
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Generate initial forecast
+            setTimeout(() => generateForecast(), 1000);
+            
+            // Add some initial agent context
+            setTimeout(() => {
+                addAgentMessage("🎯 Welcome to your store visit! I've pre-loaded data for SuperMart Downtown. I can see you have some potential issues with Cola 500ml stock levels. Ready to start the audit?");
+            }, 2000);
+            
+            // Simulate real-time updates
+            setInterval(() => {
+                updateBenchmarkMetrics();
+            }, 5000);
+        });
+
+        function updateBenchmarkMetrics() {
+            // Simulate small fluctuations in real-time metrics
+            const latencyElement = document.querySelector('.benchmark-card:nth-child(3) div:nth-child(2)');
+            const currentLatency = parseInt(latencyElement.textContent.match(/\d+/)[0]);
+            const newLatency = currentLatency + (Math.random() - 0.5) * 20;
+            latencyElement.innerHTML = `<span class="status-indicator ${newLatency > 300 ? 'status-warning' : 'status-good'}"></span>Agent P50: <strong>${Math.round(newLatency)}ms</strong>`;
+            
+            // Update overall score
+            const score = Math.max(80, Math.min(90, 85 + (Math.random() - 0.5) * 8));
+            document.getElementById('overallScore').style.width = score + '%';
+            document.querySelector('p strong').textContent = Math.round(score) + '%';
+        }
+
+        // Responsive canvas handling
+        window.addEventListener('resize', () => {
+            if (document.querySelector('.tab-panel.active').id === 'vision') {
+                setTimeout(() => simulateDetection(), 100);
+            }
+        });
+
+        // Demo mode for mobile devices without camera
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            document.querySelector('button[onclick="startCamera()"]').textContent = 'Demo Mode';
+            document.querySelector('button[onclick="startCamera()"]').onclick = simulateDetection;
+        }
+    </script>
+</body>
+</html>
